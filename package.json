@@ -12,7 +12,9 @@
     "db:seed": "node prisma/seed.mjs",
     "db:setup": "npm run db:push && npm run db:seed",
     "cli": "node tools/hivemind-cli.mjs",
-    "mcp": "node tools/hivemind-mcp.mjs"
+    "mcp": "node tools/hivemind-mcp.mjs",
+    "cli:agent": "node --env-file=.env.agent tools/hivemind-cli.mjs",
+    "mcp:agent": "node --env-file=.env.agent tools/hivemind-mcp.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.19.0",
