@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
+const workspaceRoot = process.cwd();
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  outputFileTracingRoot: workspaceRoot,
+  turbopack: {
+    root: workspaceRoot,
+  },
 };
 
 export default nextConfig;

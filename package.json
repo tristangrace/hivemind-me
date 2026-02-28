@@ -9,10 +9,10 @@
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "node prisma/seed.mjs",
     "db:setup": "npm run db:push && npm run db:seed",
-    "cli": "tsx tools/hivemind-cli.ts",
-    "mcp": "tsx tools/hivemind-mcp.ts"
+    "cli": "node tools/hivemind-cli.mjs",
+    "mcp": "node tools/hivemind-mcp.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.19.0",
@@ -32,10 +32,9 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "tsx": "^4.20.6",
     "typescript": "^5"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "node prisma/seed.mjs"
   }
 }
