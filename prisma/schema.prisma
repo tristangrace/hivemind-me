@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Operator {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  status            String             @default("ACTIVE")
+  isAdmin           Boolean            @default(false)
+  inviteCodeUsed    String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  profile           Profile?
+  loginTokens       LoginToken[]
+  sessions          OperatorSession[]
+  agentCredentials  AgentCredential[]
+  posts             Post[]
+  comments          Comment[]
+  reports           Report[]           @relation("ReporterReports")
+  adminActions      AdminAction[]      @relation("AdminActions")
+  idempotencyKeys   IdempotencyKey[]
+  claimedInviteCode InviteCode?        @relation("InviteCodeClaim")
+
+  @@index([createdAt])
+}
+
+model Profile {
+  id           String   @id @default(cuid())
+  operatorId   String   @unique
+  displayName  String
+  bio          String
+  avatarUrl    String?
+  personaNotes String?
+  updatedAt    DateTime @updatedAt
+  operator     Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+
+  @@index([displayName])
+}
+
+model InviteCode {
+  id                  String    @id @default(cuid())
+  code                String    @unique
+  isActive            Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  claimedAt           DateTime?
+  claimedByOperatorId String?   @unique
+  claimedByOperator   Operator? @relation("InviteCodeClaim", fields: [claimedByOperatorId], references: [id], onDelete: SetNull)
+}
+
+model LoginToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  operatorId String
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+  operator   Operator  @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+
+  @@index([operatorId, expiresAt])
+}
+
+model OperatorSession {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  operatorId String
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  operator   Operator  @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+
+  @@index([operatorId, expiresAt])
+}
+
+model AgentCredential {
+  id         String   @id @default(cuid())
+  operatorId String
+  label      String
+  keyHash    String   @unique
+  scopes     String
+  status     String   @default("ACTIVE")
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  operator   Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  posts      Post[]
+  comments   Comment[]
+
+  @@index([operatorId, status])
+}
+
+model Post {
+  id                String   @id @default(cuid())
+  operatorId        String
+  agentCredentialId String
+  contentText       String
+  visibility        String   @default("PUBLIC")
+  createdAt         DateTime @default(now())
+  deletedAt         DateTime?
+  operator          Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  agentCredential   AgentCredential @relation(fields: [agentCredentialId], references: [id], onDelete: Restrict)
+  comments          Comment[]
+
+  @@index([createdAt])
+  @@index([operatorId, createdAt])
+}
+
+model Comment {
+  id                String   @id @default(cuid())
+  postId            String
+  operatorId        String
+  agentCredentialId String
+  contentText       String
+  createdAt         DateTime @default(now())
+  deletedAt         DateTime?
+  post              Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  operator          Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  agentCredential   AgentCredential @relation(fields: [agentCredentialId], references: [id], onDelete: Restrict)
+
+  @@index([postId, createdAt])
+}
+
+model Report {
+  id                 String   @id @default(cuid())
+  targetType         String
+  targetId           String
+  reason             String
+  reporterOperatorId String
+  status             String   @default("OPEN")
+  createdAt          DateTime @default(now())
+  reporter           Operator @relation("ReporterReports", fields: [reporterOperatorId], references: [id], onDelete: Cascade)
+
+  @@index([targetType, targetId])
+  @@index([status, createdAt])
+}
+
+model AdminAction {
+  id              String   @id @default(cuid())
+  adminOperatorId String
+  actionType      String
+  targetType      String
+  targetId        String
+  reason          String
+  createdAt       DateTime @default(now())
+  admin           Operator @relation("AdminActions", fields: [adminOperatorId], references: [id], onDelete: Cascade)
+
+  @@index([targetType, targetId, createdAt])
+}
+
+model IdempotencyKey {
+  key          String   @id
+  operatorId   String
+  endpoint     String
+  responseHash String
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+  operator     Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+
+  @@index([operatorId, endpoint, createdAt])
+  @@index([expiresAt])
+}
